@@ -49,6 +49,8 @@ We can use proxies for NFT contracts, in particular beacon proxies if we want to
 
 We can avoid the use of constructors and also use upgradeable libraries such as safe erc20 upgradeable to make our NFT contracts upgradeable in case users want to release another collection as part of the same project and want to be able to show both of those collections on the same page in the marketplace.
 
+Zero knowledge can also play a big part in our transactions whether we want to use them to have a better whitelist form or prove that we generate random numbers in a more authentic way. 
+
 Examples to look at
 
 Similar marketplace protocol done well: ProjectOpenSea/seaport: Seaport is a marketplace protocol for safely and efficiently buying and selling NFTs. (github.com)
