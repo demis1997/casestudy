@@ -36,9 +36,28 @@ We will assume at this point that our wallet has access to everything and no iss
 The last piece of our ecosystem we have  to create is a contract that handles the marketplace transactions that can also act as a monitoring tool for our users to research different projects on our website.
 For the purpose of saving time we are not implementing any external libraries at the moment but normally this contract would need to be written with care as to avoid many attacks.  Our current setup allows users to use a marketplace with similar functions to seaport allowing them to list NFTs, make offers for tokens, make offers for projects, check some statistics and view various information such as metadata.
 
-##Concerns
+Concerns
 Some of these can be simple attacks like reentrancies or fallbacks but others can be harder to spot such as delegate calls, low level attacks, poor logic or even cross site scripting similar to the attack on opensea.
 Following this, access control is a major point for all contracts and making sure the correct view types are given to functions can make or break a contract.
 Furthermore gas is another concern for all of our contracts and having a smaller time constraint would allow us to make use of calldata, assembly code and using cheaper opcode functions and using custom errors to save gas rather than asserting, reverting etc..
 Lastly, we want to make use of functions such as abi.encodePacked(), ecrecover, wad, manually setting v, r and s, permits, having checks for the nonce to avoid replay attacks and ensuring the security, anonymity or unpredictability of the random number generator, whitelist spots, contracts to be released and NFT transactions.
 
+
+Further Improvements
+
+We can use proxies for NFT contracts, in particular beacon proxies if we want to hide some further logic and we could even use proxies for the random number generation. 
+
+We can avoid the use of constructors and also use upgradeable libraries such as safe erc20 upgradeable to make our NFT contracts upgradeable in case users want to release another collection as part of the same project and want to be able to show both of those collections on the same page in the marketplace.
+
+Examples to look at
+
+Similar marketplace protocol done well: ProjectOpenSea/seaport: Seaport is a marketplace protocol for safely and efficiently buying and selling NFTs. (github.com)
+
+Wallet: Safe Core SDK Packages - Developer Docs
+Oracle: Creating Application Seeds (oracle.com)
+General EVM: Ethereum Yellow Paper: a formal specification of Ethereum, a programmable blockchain
+Best Practices: x676f64/secureum-mind_map: Central Repository for the Epoch 0 coursework and quizzes. Contains all the content, cross-referenced and linked. (github.com)
+Fuzzing tool (I personally contributed!! ;p ): crytic/slither: Static Analyzer for Solidity (github.com)
+Testing suite: Introduction - Foundry Book (getfoundry.sh)
+IDE to test some attacks on goerli: Remix - Ethereum IDE
+OpenZeppelin libraries in depth: Proxies - OpenZeppelin Docs
