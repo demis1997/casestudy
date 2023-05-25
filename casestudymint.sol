@@ -1,11 +1,14 @@
+// SPDX-License-Identifier: MIT
 pragma solidity >=0.8.9 <0.9.0;
 
-import 'erc721a/contracts/ERC721A.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
-import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
-import 'oracle.js';
-contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
+import 'node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import 'node_modules/@openzeppelin/contracts/access/Ownable.sol';
+import 'node_modules/@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
+import 'node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import 'vrf.sol';
+
+
+contract NFT is ERC721A, Ownable, ReentrancyGuard {
 
   using Strings for uint256;
   bytes32 private commitment;
@@ -18,6 +21,7 @@ contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
   string public uriPrefix = '';
   string public uriSuffix = '.json';
   string public hiddenMetadataUri;
+
   
   uint256 public timer;
   uint256 public cost;
@@ -57,15 +61,27 @@ contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
 
 
   function mint(uint256 _mintAmount) public payable mintCompliance(_mintAmount) mintPriceCompliance(_mintAmount) {
+
+    //we can save in calldata instead of memory to save gas because we will avoid copying all the time when accessing the arguments 
     require(!paused, 'The contract is paused!');
     bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
     require(MerkleProof.verify(_merkleProof, merkleRoot, leaf), 'Invalid proof!');
     require(!reserved[leaf], 'Address already claimed!');
-        //we are using a VRF here and assuming that there is an oracle service that allows us to verify this seed 
+        //we are using a VRF here and assuming that the oracle service  allows us to verify this seed using a map 
         randomSeed = bytes32(keccak256(abi.encodePacked(userProvidedRandomness, commitment)));
         userSeeds[msg.sender] = randomSeed;
-         reserved[leaf] = true;
+        reserved[leaf] = true;
     _safeMint(_msgSender(), _mintAmount);
+
+
+    /*to save gas we can use something like this for storing the random seed to use Mstore instead of Sstore to save gas:
+      assembly {
+    Load the randomSeed slot
+    let slot := sload(randomSeed_slot)
+    Store randomSeed in memory
+    mstore(slot, randomSeed)
+  }
+*/
 
 
   }
@@ -149,6 +165,8 @@ contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
     uriSuffix = _uriSuffix;
   }
 
+
+
   function setTimer(uint256 _timer){
     timer = _timer;
 
@@ -163,9 +181,6 @@ contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
     _merkleRootLink = merkleRoot;
   }
 
-  function setWhitelistMintEnabled(bool _state) public onlyOwner {
-    whitelistMintEnabled = _state;
-  }
 
   function withdraw() public onlyOwner nonReentrant {
 
@@ -179,3 +194,57 @@ contract caseStudy is ERC721A, Ownable, ReentrancyGuard {
     return uriPrefix;
   }
 }
+
+
+
+
+/*
+we need variables of startPrice, timer, priceDecrement, timeElapsed, priceDecrement and an auctionEnded variable to make sure that the auction ends when someone buys 
+
+
+ function endAuction() public onlyOwner {
+    require(!auctionEnded, "The auction has already ended.");
+    require(!paused, "The contract is paused.");
+
+    if (block.timestamp < timer + auctionDuration) {
+      // End the auction prematurely if needed
+      timer = block.timestamp - auctionDuration;
+    }
+
+    auctionEnded = true;
+    paused = true;
+  }
+
+
+function getCurrentPrice() public view returns (uint256) {
+  if (block.timestamp <= timer) {
+    return startPrice;
+  } else if (block.timestamp >= timer + auctionDuration) {
+    return 0;
+  } else {
+    uint256 timeElapsed = block.timestamp - timer;
+    uint256 currentPrice = startPrice - (priceDecrement * timeElapsed);
+    return currentPrice;
+}
+
+function getDAPrice(startTime, stepNumber, currentTime, stepDecrement, stepDuration, startPrice, stepIndex ) {
+
+
+stepIndex = elapsedTime100 /stepDuration10
+10
+currentPrice = startPrice20 - stepDecrement5 * stepIndex10
+}
+  }
+}
+function mint(uint256 _mintAmount) public payable mintCompliance(_mintAmount) {
+  require(!paused, "The contract is paused!");
+  require(msg.value >= getCurrentPrice() * _mintAmount, "Insufficient funds!");
+  bytes32 leaf = keccak256(abi.encodePacked(_msgSender()));
+  require(MerkleProof.verify(_merkleProof, merkleRoot, leaf), "Invalid proof!");
+  require(!reserved[leaf], "Address already claimed!");
+  randomSeed = bytes32(keccak256(abi.encodePacked(userProvidedRandomness, commitment)));
+  userSeeds[msg.sender] = randomSeed;
+  reserved[leaf] = true;
+  _safeMint(_msgSender(), _mintAmount);
+}
+*/
